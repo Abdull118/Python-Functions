@@ -19,4 +19,4 @@ def generate_unique_id_hash():
 
 # Generate the uniqueIdHash
 unique_id_hash = generate_unique_id_hash()
-print(f"uniqueIdHash: {unique_id_hash}")
+print(f"uniqueIdHash: 0x{unique_id_hash}")
