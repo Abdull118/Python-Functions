@@ -1,0 +1,61 @@
+from pptx import Presentation
+from pptx.enum.shapes import MSO_SHAPE_TYPE
+from pptx.util import Pt, Inches
+
+def adjust_layout(slide, notes_text, slide_width, slide_height):
+    """Adjust the slide layout to integrate notes without cutting off content."""
+    reserved_space = Inches(1.5)  # Reserve 1.5 inches at the bottom for notes
+
+    # Calculate available space for existing slide content
+    available_height = slide_height - reserved_space
+
+    # Reposition and resize all shapes dynamically
+    for shape in slide.shapes:
+        # Check if shape is a text box or table
+        if shape.shape_type in {MSO_SHAPE_TYPE.TEXT_BOX, MSO_SHAPE_TYPE.TABLE}:
+            if shape.top + shape.height > available_height:
+                # Resize to fit within the available space
+                shape.height = max(shape.height - reserved_space, Pt(50))  # Ensure minimum size
+                shape.top = min(shape.top, available_height - shape.height)  # Move upwards if needed
+
+    # Add the notes textbox dynamically to the reserved area
+    left_margin = Inches(0.5)
+    right_margin = Inches(0.5)
+    width = slide_width - left_margin - right_margin
+    top = available_height
+    height = reserved_space - Inches(0.2)
+
+    notes_box = slide.shapes.add_textbox(left_margin, top, width, height)
+    text_frame = notes_box.text_frame
+    text_frame.text = notes_text
+    text_frame.word_wrap = True
+
+    # Format the notes text
+    for paragraph in text_frame.paragraphs:
+        paragraph.font.size = Pt(10)
+        paragraph.font.name = "Arial"
+
+def add_notes_to_slide(pptx_file, output_file):
+    """Add notes from the notes section to slides and dynamically adjust content."""
+    prs = Presentation(pptx_file)
+
+    # Get slide dimensions
+    slide_width = prs.slide_width
+    slide_height = prs.slide_height
+
+    for slide in prs.slides:
+        # Get the notes text (if available)
+        if slide.notes_slide and slide.notes_slide.notes_text_frame:
+            notes_text = slide.notes_slide.notes_text_frame.text.strip()
+            if notes_text:
+                adjust_layout(slide, notes_text, slide_width, slide_height)
+
+    # Save the updated presentation
+    prs.save(output_file)
+    print(f"Updated presentation saved as '{output_file}'.")
+
+# Use the function
+input_pptx = "/Users/arashnaimi/Library/Mobile Documents/com~apple~CloudDocs/TouroCOM/Year 2/Semester 1/Mod 5/DHahn/drive-download-20241113T232041Z-001/CS/1 Lipids 2019 LV + DHahn Notes.pptx"
+output_pptx = "/Users/arashnaimi/Library/Mobile Documents/com~apple~CloudDocs/TouroCOM/Year 2/Semester 1/Mod 5/DHahn/drive-download-20241113T232041Z-001/CS/10 Lipids 2019 LV + DHahn Notes.pptx"
+
+add_notes_to_slide(input_pptx, output_pptx)
